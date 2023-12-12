@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BaseTools
+namespace BaseTools.Trace
 {
     [Flags]
     public enum LineType

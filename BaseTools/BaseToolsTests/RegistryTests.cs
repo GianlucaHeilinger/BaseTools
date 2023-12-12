@@ -1,4 +1,5 @@
 using BaseTools;
+using BaseTools.Registry;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 

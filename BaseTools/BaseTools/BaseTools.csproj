@@ -1,8 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+	  <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>BaseTools</Title>
@@ -11,7 +12,9 @@
     <RepositoryUrl>https://github.com/GianlucaHeilinger/BaseTools</RepositoryUrl>
     <PackageReleaseNotes>Init</PackageReleaseNotes>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
+	  <Version>1.0.1.0</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <AssemblyVersion></AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
