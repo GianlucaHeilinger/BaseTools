@@ -8,7 +8,7 @@ using System.Windows.Input;
 
 namespace BaseTools.Command
 {
-    internal class GCommand<T> : IGCommand<T>, ICommand
+    public  class GCommand<T> : IGCommand<T>, ICommand
     {
         private readonly Action<T?> _execute;
 
