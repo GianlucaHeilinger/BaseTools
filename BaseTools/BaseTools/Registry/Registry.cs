@@ -12,7 +12,7 @@ namespace BaseTools.Registry
 {
     public static class Registry
     {
-        private static RegistryKey? _registryKey;
+        public static RegistryKey? RegistryKey { get; private set; }
         private const string _settingsString = "Settings";
         private const string _softwareString = "Software";
 
@@ -23,7 +23,7 @@ namespace BaseTools.Registry
                 TraceWriter.WriteLine($"Init Registry with Key: '{mainKey}'", LineType.Start);
 
                 var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(_softwareString, true);
-                _registryKey = key?.CreateSubKey(mainKey, true);
+                RegistryKey = key?.CreateSubKey(mainKey, true);
 
                 TraceWriter.WriteLine($"Init Registry with Key: '{mainKey}' successful", LineType.End);
             }
@@ -37,9 +37,9 @@ namespace BaseTools.Registry
 
         private static bool CheckRegistryKey()
         {
-            if (_registryKey == null) { TraceWriter.WriteLine("Registry not Initialized", LineType.End); }
+            if (RegistryKey == null) { TraceWriter.WriteLine("Registry not Initialized", LineType.End); }
 
-            return _registryKey != null;
+            return RegistryKey != null;
         }
 
         public static bool SaveValueToRegistry<T>(string name, T? value, RegistryValueKind valueKind = RegistryValueKind.String, string subKeyName = _settingsString)
@@ -49,7 +49,7 @@ namespace BaseTools.Registry
                 TraceWriter.WriteLine($"Saving Value to Registry. Name '{name}' | Subkey '{subKeyName}'", LineType.Start);
 
                 if (!CheckRegistryKey()) { return false; }
-                var optionsKey = _registryKey!.CreateSubKey(subKeyName, true);
+                var optionsKey = RegistryKey!.CreateSubKey(subKeyName, true);
 
                 optionsKey?.SetValue(name, value ?? default(T) ?? (object)string.Empty, valueKind);
 
@@ -89,7 +89,7 @@ namespace BaseTools.Registry
             {
                 if (!CheckRegistryKey()) { return defaultValue?.ToString(); }
 
-                var key = _registryKey!.CreateSubKey(subKeyName);
+                var key = RegistryKey!.CreateSubKey(subKeyName);
 
                 var value = key?.GetValue(name, defaultValue)?.ToString();
 
@@ -142,7 +142,7 @@ namespace BaseTools.Registry
 
                 if (!CheckRegistryKey()) { return false; }
 
-                var key = _registryKey!.CreateSubKey(subKeyName);
+                var key = RegistryKey!.CreateSubKey(subKeyName);
 
                 key?.DeleteValue(name, false);
 
@@ -167,7 +167,7 @@ namespace BaseTools.Registry
                 if (!CheckRegistryKey()) { return false; }
 
                 var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(_softwareString, true);
-                key?.DeleteSubKeyTree(_registryKey!.Name.Split("\\").Last(), true);
+                key?.DeleteSubKeyTree(RegistryKey!.Name.Split("\\").Last(), true);
 
                 TraceWriter.WriteLine($"Deleted all Values from Registry.", LineType.Start);
             }
