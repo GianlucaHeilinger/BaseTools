@@ -1,4 +1,5 @@
-﻿using BaseTools.Trace;
+﻿using BaseTools.Common;
+using BaseTools.Trace;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -69,11 +70,7 @@ namespace BaseTools.Registry
             {
                 TraceWriter.WriteLine($"Retrieving Value from Registry. Name '{name}' | Subkey '{subKeyName}'", LineType.Start);
 
-                if (!CheckRegistryKey()) { return defaultValue?.ToString(); }
-
-                var key = _registryKey!.CreateSubKey(subKeyName);
-
-                var value= key?.GetValue(name, defaultValue)?.ToString();
+                var value = GetValueFromRegistryInternal(name, defaultValue, subKeyName);
 
                 TraceWriter.WriteLine($"Retrieved Value from Registry. Name '{name}' | Subkey '{subKeyName}'", LineType.End);
 
@@ -83,6 +80,57 @@ namespace BaseTools.Registry
             {
                 TraceWriter.WriteLine($"Retrieved Value from Registry failed. Name '{name}' | Subkey '{subKeyName}' | Returning default Value", LineType.End);
                 return defaultValue?.ToString();
+            }
+        }
+
+        private static string? GetValueFromRegistryInternal(string name, object? defaultValue = null, string subKeyName = _settingsString)
+        {
+            try
+            {
+                if (!CheckRegistryKey()) { return defaultValue?.ToString(); }
+
+                var key = _registryKey!.CreateSubKey(subKeyName);
+
+                var value = key?.GetValue(name, defaultValue)?.ToString();
+
+                return value;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public static T? GetStructValueFromRegistry<T>(string name, T? defaultValue = null, string subKeyName = _settingsString) where T : struct
+        {
+            try
+            {
+                TraceWriter.WriteLine($"Retrieving Value from Registry. Name '{name}' | Subkey '{subKeyName}'", LineType.Start);
+
+                var value = GetValueFromRegistryInternal(name, defaultValue, subKeyName);
+
+                TraceWriter.WriteLine($"Retrieved Value from Registry. Name '{name}' | Subkey '{subKeyName}'");
+
+                try
+                {
+                    TraceWriter.WriteLine($"Converting Value from Registry to type '{typeof(T).Name}'. Name '{name}' | Subkey '{subKeyName}'");
+
+                    var convertedValue = TypeConverter.ConvertToType<T>(value);
+
+                    TraceWriter.WriteLine($"Converted Value from Registry to type '{typeof(T).Name}'. Name '{name}' | Subkey '{subKeyName}'", LineType.End);
+
+                    return convertedValue;
+                }
+                catch (Exception)
+                {
+                    TraceWriter.WriteLine($"Converting Value from Registry to type '{typeof(T).Name}' failed. Name '{name}' | Subkey '{subKeyName}' | Returning default Value", LineType.End);
+                    return defaultValue;
+                }
+            }
+            catch
+            {
+                TraceWriter.WriteLine($"Retrieving Value from Registry failed. Name '{name}' | Subkey '{subKeyName}' | Returning default Value", LineType.End);
+                return defaultValue;
             }
         }
 
@@ -103,7 +151,7 @@ namespace BaseTools.Registry
             catch
             {
                 TraceWriter.WriteLine($"Deleting Value from Registry failed. Name '{name}' | Subkey '{subKeyName}'", LineType.End);
-                
+
                 return false;
             }
 
@@ -116,7 +164,7 @@ namespace BaseTools.Registry
             {
                 TraceWriter.WriteLine($"Deleting all Values from Registry.", LineType.Start);
 
-                if (!CheckRegistryKey()) {  return false; }
+                if (!CheckRegistryKey()) { return false; }
 
                 var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(_softwareString, true);
                 key?.DeleteSubKeyTree(_registryKey!.Name.Split("\\").Last(), true);

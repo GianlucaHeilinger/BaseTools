@@ -58,6 +58,28 @@ namespace BaseToolsTests
             value = Registry.GetValueFromRegistry(testKey, subKeyName: testCustomSubKey);
 
             Assert.AreEqual(testValue, value);
+        } 
+        
+        [TestMethod]
+        public void GetStructValueFromRegistry()
+        {
+            var testStructValue =true;
+            var testKey = "TestStructKey";
+            var testCustomSubKey = "TestStructSubKey";
+
+            //Standard
+            Registry.SaveValueToRegistry(testKey, testStructValue);
+
+            var value = Registry.GetStructValueFromRegistry<bool>(testKey,false);
+
+            Assert.AreEqual(testStructValue, value);
+
+            //SubKey
+            Registry.SaveValueToRegistry(testKey, testStructValue, subKeyName: testCustomSubKey);
+
+            value = Registry.GetStructValueFromRegistry<bool>(testKey, false, subKeyName: testCustomSubKey);
+
+            Assert.AreEqual(testStructValue, value);
         }
 
         [TestMethod]
