@@ -2,54 +2,70 @@
 using BaseTools.Trace;
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace BaseTools.Registry
 {
+    /// <summary>
+    /// Provides methods to interact with the Windows Registry.
+    /// </summary>
     public static class Registry
     {
-        public static RegistryKey? RegistryKey { get; private set; }
+        /// <summary>
+        /// Gets the current registry key.
+        /// </summary>
+        public static RegistryKey? ApplicationRegistryKey { get; private set; }
         private const string _settingsString = "Settings";
         private const string _softwareString = "Software";
 
+        /// <summary>
+        /// Initializes the registry with the specified key.
+        /// </summary>
+        /// <param name="mainKey">The main key to initialize the registry with.</param>
         public static void InitRegistry(string mainKey)
         {
             try
             {
                 TraceWriter.WriteLine($"Init Registry with Key: '{mainKey}'", LineType.Start);
 
-                var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(_softwareString, true);
-                RegistryKey = key?.CreateSubKey(mainKey, true);
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(_softwareString, true);
+                ApplicationRegistryKey = key?.CreateSubKey(mainKey, true);
 
                 TraceWriter.WriteLine($"Init Registry with Key: '{mainKey}' successful", LineType.End);
             }
             catch (Exception)
             {
                 TraceWriter.WriteLine($"Init Registry with Key: '{mainKey}' failed", LineType.End);
-
                 throw;
             }
         }
 
         private static bool CheckRegistryKey()
         {
-            if (RegistryKey == null) { TraceWriter.WriteLine("Registry not Initialized", LineType.End); }
+            if (ApplicationRegistryKey == null)
+            {
+                TraceWriter.WriteLine("Registry not Initialized", LineType.End);
+            }
 
-            return RegistryKey != null;
+            return ApplicationRegistryKey != null;
         }
 
+        /// <summary>
+        /// Saves a value to the registry.
+        /// </summary>
+        /// <typeparam name="T">The type of the value to save.</typeparam>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="value">The value to save.</param>
+        /// <param name="valueKind">The kind of the value.</param>
+        /// <param name="subKeyName">The subkey name.</param>
+        /// <returns>True if the value was saved successfully; otherwise, false.</returns>
         public static bool SaveValueToRegistry<T>(string name, T? value, RegistryValueKind valueKind = RegistryValueKind.String, string subKeyName = _settingsString)
         {
             try
             {
                 TraceWriter.WriteLine($"Saving Value to Registry. Name '{name}' | Subkey '{subKeyName}'", LineType.Start);
 
-                if (!CheckRegistryKey()) { return false; }
-                var optionsKey = RegistryKey!.CreateSubKey(subKeyName, true);
+                if (!CheckRegistryKey()) return false;
+                using var optionsKey = ApplicationRegistryKey!.CreateSubKey(subKeyName, true);
 
                 optionsKey?.SetValue(name, value ?? default(T) ?? (object)string.Empty, valueKind);
 
@@ -64,6 +80,13 @@ namespace BaseTools.Registry
             return true;
         }
 
+        /// <summary>
+        /// Retrieves a value from the registry.
+        /// </summary>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="defaultValue">The default value to return if the value is not found.</param>
+        /// <param name="subKeyName">The subkey name.</param>
+        /// <returns>The retrieved value, or the default value if the value is not found.</returns>
         public static string? GetValueFromRegistry(string name, object? defaultValue = null, string subKeyName = _settingsString)
         {
             try
@@ -85,22 +108,20 @@ namespace BaseTools.Registry
 
         private static string? GetValueFromRegistryInternal(string name, object? defaultValue = null, string subKeyName = _settingsString)
         {
-            try
-            {
-                if (!CheckRegistryKey()) { return defaultValue?.ToString(); }
+            if (!CheckRegistryKey()) return defaultValue?.ToString();
 
-                var key = RegistryKey!.CreateSubKey(subKeyName);
-
-                var value = key?.GetValue(name, defaultValue)?.ToString();
-
-                return value;
-            }
-            catch
-            {
-                throw;
-            }
+            using var key = ApplicationRegistryKey!.CreateSubKey(subKeyName);
+            return key?.GetValue(name, defaultValue)?.ToString();
         }
 
+        /// <summary>
+        /// Retrieves a struct value from the registry.
+        /// </summary>
+        /// <typeparam name="T">The type of the value to retrieve.</typeparam>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="defaultValue">The default value to return if the value is not found.</param>
+        /// <param name="subKeyName">The subkey name.</param>
+        /// <returns>The retrieved value, or the default value if the value is not found.</returns>
         public static T? GetStructValueFromRegistry<T>(string name, T? defaultValue = null, string subKeyName = _settingsString) where T : struct
         {
             try
@@ -134,16 +155,21 @@ namespace BaseTools.Registry
             }
         }
 
+        /// <summary>
+        /// Deletes a value from the registry.
+        /// </summary>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="subKeyName">The subkey name.</param>
+        /// <returns>True if the value was deleted successfully; otherwise, false.</returns>
         public static bool DeleteValue(string name, string subKeyName = _settingsString)
         {
             try
             {
                 TraceWriter.WriteLine($"Deleting Value from Registry. Name '{name}' | Subkey '{subKeyName}'", LineType.Start);
 
-                if (!CheckRegistryKey()) { return false; }
+                if (!CheckRegistryKey()) return false;
 
-                var key = RegistryKey!.CreateSubKey(subKeyName);
-
+                using var key = ApplicationRegistryKey!.CreateSubKey(subKeyName);
                 key?.DeleteValue(name, false);
 
                 TraceWriter.WriteLine($"Deleted Value from Registry. Name '{name}' | Subkey '{subKeyName}'", LineType.End);
@@ -151,23 +177,26 @@ namespace BaseTools.Registry
             catch
             {
                 TraceWriter.WriteLine($"Deleting Value from Registry failed. Name '{name}' | Subkey '{subKeyName}'", LineType.End);
-
                 return false;
             }
 
             return true;
         }
 
+        /// <summary>
+        /// Deletes all values from the registry.
+        /// </summary>
+        /// <returns>True if all values were deleted successfully; otherwise, false.</returns>
         public static bool DeleteAllValues()
         {
             try
             {
                 TraceWriter.WriteLine($"Deleting all Values from Registry.", LineType.Start);
 
-                if (!CheckRegistryKey()) { return false; }
+                if (!CheckRegistryKey()) return false;
 
-                var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(_softwareString, true);
-                key?.DeleteSubKeyTree(RegistryKey!.Name.Split("\\").Last(), true);
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(_softwareString, true);
+                key?.DeleteSubKeyTree(ApplicationRegistryKey!.Name.Split("\\").Last(), true);
 
                 TraceWriter.WriteLine($"Deleted all Values from Registry.", LineType.Start);
             }
